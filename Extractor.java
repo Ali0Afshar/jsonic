@@ -13,4 +13,13 @@ public class Extractor {
             throw new IllegalArgumentException("Error: Invalid command format");
     }
 
+    public static void extractTypeName(InputData inputData) throws IllegalArgumentException {
+        Pattern pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+([a-zA-Z0-9_]+)");
+        Matcher matcher = pattern.matcher(inputData.input);
+
+        if (matcher.find())
+            inputData.typeName = matcher.group(1).trim();
+        else
+            throw new IllegalArgumentException("Error: Invalid type format");
+    }
 }
