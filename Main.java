@@ -18,6 +18,15 @@ public class Main {
                 System.exit(0);
             }
 
+            try {
+                Extractor.extractCommand(inputData);
+                CommandProcessor processor = new CommandProcessor();
+                processor.processCommand(inputData);
+            }
+            catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
         } while (true);
     }
 }
