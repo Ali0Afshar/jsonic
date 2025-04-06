@@ -21,6 +21,10 @@ public class CreateCommandHandler implements CommandHandler {
             throw new IllegalArgumentException("Error: JSON can't be empty.");
 
         checkJson(inputData.json);
+
+        prepareJson(inputData.json);
+
+        Database.addNewTypeFormat(inputData.typeName, inputData.json);
     }
 
     private boolean isValidInput(String input) {
@@ -78,5 +82,23 @@ public class CreateCommandHandler implements CommandHandler {
     private boolean isValidType(String type) {
         return type.equals("string") || type.equals("int") || type.equals("bool") || 
                type.equals("list") || type.equals("dbl") || type.equals("time");
+    }
+
+    private void prepareJson(HashMap<String, Object> json) {
+        HashMap<String, Boolean> SupplementJson = new HashMap<>();
+        
+        for (String key : json.keySet()) {
+            if (json.get(key) instanceof HashMap)
+                prepareJson((HashMap<String, Object>) json.get(key));
+            else {
+                if (!json.containsKey("required"))
+                    SupplementJson.put("required", false);
+                if (!json.containsKey("unique"))
+                    SupplementJson.put("unique", false);
+            }
+        }
+
+        for (String key : SupplementJson.keySet())
+            json.put(key, SupplementJson.get(key));
     }
 }
