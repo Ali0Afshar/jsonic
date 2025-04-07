@@ -11,7 +11,8 @@ public class CreateCommandHandler implements CommandHandler {
 
         Extractor.extractTypeName(inputData);
 
-        if (Database.getTypeFormatByType(inputData.typeName) != null) {
+        Database db = Database.getInstance();
+        if (db.getTypeFormatByType(inputData.typeName) != null) {
             throw new IllegalArgumentException("Error: This type already exists!");
         }
         
@@ -24,7 +25,7 @@ public class CreateCommandHandler implements CommandHandler {
 
         prepareJson(inputData.json);
 
-        Database.addNewTypeFormat(inputData.typeName, inputData.json);
+        db.addNewTypeFormat(inputData.typeName, inputData.json);
     }
 
     private boolean isValidInput(String input) {
