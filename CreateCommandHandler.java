@@ -47,36 +47,36 @@ public class CreateCommandHandler implements CommandHandler {
                 if (((HashMap<String, Object>)value).isEmpty())
                     throw new IllegalArgumentException("Error: JSON can't be empty.");
                 checkJson((HashMap<String, Object>) value);
+                return;
             }
-            else {
-                if (!json.containsKey("type"))
-                    throw new IllegalArgumentException("Error: Key type should be appear in " + json + ".");
 
-                if (key.equals("type")) {
+            if (!json.containsKey("type"))
+                throw new IllegalArgumentException("Error: Key type should be appear in " + json + ".");
+
+            if (key.equals("type")) {
+                if (!isValidType((String) value))
+                    throw new IllegalArgumentException("Error: Type " + value + " is not valid.");
+            }
+            else if (key.equals("items")) {
+                if (json.get("type").equals("list")) {
+                    if (value.equals("list"))
+                        throw new IllegalArgumentException("Error: Nested list is not allowed.");
                     if (!isValidType((String) value))
                         throw new IllegalArgumentException("Error: Type " + value + " is not valid.");
                 }
-                else if (key.equals("items")) {
-                    if (json.get("type").equals("list")) {
-                        if (value.equals("list"))
-                            throw new IllegalArgumentException("Error: Nested list is not allowed.");
-                        if (!isValidType((String) value))
-                            throw new IllegalArgumentException("Error: Type " + value + " is not valid.");
-                    }
-                    else
-                        throw new IllegalArgumentException("Error: Key items is not allowed for type " + json.get("type") + ".");
-                }
-                else if (key.equals("required")) {
-                    if (!(value instanceof Boolean))
-                        throw new IllegalArgumentException("Error: Required should be true/false, not " + value + " .");
-                }
-                else if (key.equals("unique")) {
-                    if (!(value instanceof Boolean))
-                        throw new IllegalArgumentException("Error: Unique should be true/false not " + value + " .");
-                }
                 else
-                    throw new IllegalArgumentException("Error: Key " + key + " invalid. Valid keys are type, required and unique.");
+                    throw new IllegalArgumentException("Error: Key items is not allowed for type " + json.get("type") + ".");
             }
+            else if (key.equals("required")) {
+                if (!(value instanceof Boolean))
+                    throw new IllegalArgumentException("Error: Required should be true/false, not " + value + " .");
+            }
+            else if (key.equals("unique")) {
+                if (!(value instanceof Boolean))
+                    throw new IllegalArgumentException("Error: Unique should be true/false not " + value + " .");
+            }
+            else
+                throw new IllegalArgumentException("Error: Key " + key + " invalid. Valid keys are type, required and unique.");
         }
     }
 
