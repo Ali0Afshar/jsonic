@@ -32,6 +32,8 @@ public class InsertCommandHandler implements CommandHandler {
         Extractor.extractJson(inputData);
 
         checkJsonInput(inputData.json, db.getTypeFormatByType(inputData.typeName));
+
+        checkJsonInputKey(inputData.json, db.getTypeFormatByType(inputData.typeName));
     }
 
     private boolean isValidInput(String input) {
@@ -40,6 +42,17 @@ public class InsertCommandHandler implements CommandHandler {
         if (matcher.find())
             return true;
         return false;
+    }
+
+    private void checkJsonInputKey(HashMap<String, Object> inputJson, HashMap<String, Object> jsonFormat) throws IllegalArgumentException {
+        for (String key : inputJson.keySet()) {
+            if (!jsonFormat.containsKey(key))
+                throw new IllegalArgumentException("Error: Key '" + key + "' is not defined in the format.");
+            if (inputJson.get(key) instanceof HashMap) {
+                checkJsonInputKey((HashMap<String, Object>) inputJson.get(key), (HashMap<String, Object>) jsonFormat.get(key));
+                continue;
+            }
+        }
     }
 
     private void checkJsonInput(HashMap<String, Object> inputJson, HashMap<String, Object> jsonFormat) throws IllegalArgumentException {
