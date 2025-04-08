@@ -47,7 +47,7 @@ public class CreateCommandHandler implements CommandHandler {
                 if (((HashMap<String, Object>)value).isEmpty())
                     throw new IllegalArgumentException("Error: JSON can't be empty.");
                 checkJson((HashMap<String, Object>) value);
-                return;
+                continue;
             }
 
             if (!json.containsKey("type"))

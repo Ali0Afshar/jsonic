@@ -3,7 +3,6 @@ package ir.ac.kntu;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +32,6 @@ public class InsertCommandHandler implements CommandHandler {
         Extractor.extractJson(inputData);
 
         checkJsonInput(inputData.json, db.getTypeFormatByType(inputData.typeName));
-
     }
 
     private boolean isValidInput(String input) {
@@ -54,8 +52,8 @@ public class InsertCommandHandler implements CommandHandler {
             Object valueInput = inputJson.get(key);
             if (isNestedJson(valueFormat)) {
                 if (valueInput instanceof HashMap) {
-                    checkJsonInput(inputJson, jsonFormat);
-                    return;
+                    checkJsonInput((HashMap<String, Object>) valueInput, valueFormat);
+                    continue;
                 }
                 throw new IllegalArgumentException("Error: \'" + valueInput + "\' is wrong.");
             }
