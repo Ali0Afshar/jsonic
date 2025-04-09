@@ -15,7 +15,6 @@ public class InsertCommandHandler implements CommandHandler {
         DEFAULT_VALUE.put("dbl", 0.0);
         DEFAULT_VALUE.put("bool", false);
         DEFAULT_VALUE.put("list", new ArrayList<>());
-        DEFAULT_VALUE.put("time", LocalDateTime.now());
     }
 
     public void handle(InputData inputData) throws IllegalArgumentException {
@@ -145,8 +144,12 @@ public class InsertCommandHandler implements CommandHandler {
             throw new IllegalArgumentException("Error: \'" + valueFormat + "\' is necessary");
         else if ((Boolean) valueFormat.get("required"))
             throw new IllegalArgumentException("Error: \'" + key + ": " + valueFormat + "\' is necessary");
-        else 
-            inputJson.put(key, DEFAULT_VALUE.get(valueFormat.get("type")));
+        else {
+            if (valueFormat.get("type").equals("time"))
+                inputJson.put(key, LocalDateTime.now());
+            else
+                inputJson.put(key, DEFAULT_VALUE.get(valueFormat.get("type")));
+        }
     }
 
     private boolean isNestedJson(HashMap<String, Object> json) {
