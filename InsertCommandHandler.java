@@ -34,6 +34,10 @@ public class InsertCommandHandler implements CommandHandler {
         checkJsonInput(inputData.json, db.getTypeFormatByType(inputData.typeName));
 
         checkJsonInputKey(inputData.json, db.getTypeFormatByType(inputData.typeName));
+
+        checkJsonUnique(inputData.json, db.getAllDataByType(inputData.typeName), db.getTypeFormatByType(inputData.typeName));
+
+        db.addData(inputData.typeName, inputData.json);
     }
 
     private boolean isValidInput(String input) {
@@ -42,6 +46,27 @@ public class InsertCommandHandler implements CommandHandler {
         if (matcher.find())
             return true;
         return false;
+    }
+
+    private void checkJsonUnique(HashMap<String, Object> inputJson, ArrayList<HashMap<String, Object>> dataList, HashMap<String, Object> dataFormat) throws IllegalArgumentException {
+        for (HashMap<String, Object> data : dataList)
+            checkDataUnique(inputJson, data, dataFormat);
+    }
+
+    private void checkDataUnique(HashMap<String, Object> inputJson, HashMap<String, Object> data, HashMap<String, Object> dataFormat) throws IllegalArgumentException {
+        for (String key : inputJson.keySet()) {
+            Object inputValue = inputJson.get(key);
+            Object dataValue = data.get(key);
+
+            if (inputValue instanceof HashMap) {
+                checkDataUnique((HashMap<String, Object>) inputValue, (HashMap<String, Object>) dataValue, (HashMap<String, Object>) dataFormat.get(key));
+                continue;
+            }
+
+            if ((Boolean) ((HashMap<String, Object>) dataFormat.get(key)).get("unique"))
+                if (inputValue.equals(dataValue) && !DEFAULT_VALUE.values().contains(inputValue))
+                    throw new IllegalArgumentException("Error: '" + inputValue + "' already exist. key '" + key + "' is unique.");
+        }
     }
 
     private void checkJsonInputKey(HashMap<String, Object> inputJson, HashMap<String, Object> jsonFormat) throws IllegalArgumentException {
