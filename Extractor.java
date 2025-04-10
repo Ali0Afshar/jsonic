@@ -56,6 +56,41 @@ public class Extractor {
         inputData.json = parseJSON(jsonInput);
     }
 
+    public static void extractConditions(InputData inputData) throws IllegalArgumentException {
+        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_]+\\s+[a-zA-Z0-9_]+\\s*\\((.*?)\\)$");
+        Matcher matcher = pattern.matcher(inputData.input);
+        
+        if (matcher.find()) {
+            String conditions = matcher.group(1).trim();
+            inputData.conditions = parseConditions(conditions);
+        }
+        else {
+            throw new IllegalArgumentException("Error: Invalid conditions format.");
+        }
+    }
+
+    private static ArrayList<Condition> parseConditions(String conditionsString) throws IllegalArgumentException {
+        if (conditionsString.isEmpty())
+            throw new IllegalArgumentException("Error: Conditions can't be empty.");
+
+        ArrayList<Condition> conditionsList = new ArrayList<>();
+        String[] conditions = conditionsString.split(",");
+
+        for (String condition : conditions) {
+            String[] parts = condition.trim().split("(?<=[^\\s])\\s*(>=|<=|!=|=|>|<|\\s+include\\s+)\\s*(?=[^\\s])");
+            if (parts.length != 2)
+                throw new IllegalArgumentException("Error: Invalid condition '" + condition + "' .");
+
+            String field1 = parts[0].trim();
+            String operator = condition.trim().substring(field1.length(), condition.trim().length() - parts[1].trim().length()).trim();
+            String field2 = parts[1].trim();
+
+            conditionsList.add(new Condition(field1, operator, field2));
+        }
+
+        return conditionsList;
+    }
+
     private static HashMap<String, Object> parseJSON(String json) throws IllegalArgumentException {
         HashMap<String, Object> hashMap = new HashMap<>();
         json = json.substring(1, json.length() - 1).trim();
@@ -127,7 +162,7 @@ public class Extractor {
     
         return pairs;
     }
-    
+
     private static Object parseValue(String value) throws IllegalArgumentException {
         value = value.trim();
 
@@ -184,4 +219,3 @@ public class Extractor {
         return arrayList;
     }
 }
-    
