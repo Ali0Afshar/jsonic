@@ -28,11 +28,11 @@ public class Extractor {
             throw new IllegalArgumentException("Error: Invalid type format");
     }
 
-    public static void extractJson(InputData inputData) throws IllegalArgumentException {
+    public static boolean extractJson(InputData inputData) throws IllegalArgumentException {
         String input = inputData.input.trim();
         int start = input.indexOf('{');
         if (start == -1)
-            throw new IllegalArgumentException("Error: JSON doesn't exist");
+            return false;
 
         int count = 0, end = -1;
         for (int i = start; i < input.length(); i++) {
@@ -54,19 +54,20 @@ public class Extractor {
 
         String jsonInput = input.substring(start, end + 1).trim();
         inputData.json = parseJSON(jsonInput);
+        return true;
     }
 
-    public static void extractConditions(InputData inputData) throws IllegalArgumentException {
-        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_]+\\s+[a-zA-Z0-9_]+\\s*\\((.*?)\\)$");
+    public static boolean extractConditions(InputData inputData) throws IllegalArgumentException {
+        Pattern pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+[a-zA-Z0-9_]+\\s+\\(([^()]+)\\).*");
         Matcher matcher = pattern.matcher(inputData.input);
         
         if (matcher.find()) {
             String conditions = matcher.group(1).trim();
             inputData.conditions = parseConditions(conditions);
+            return true;
         }
-        else {
-            throw new IllegalArgumentException("Error: Invalid conditions format.");
-        }
+        
+        return false;
     }
 
     private static ArrayList<Condition> parseConditions(String conditionsString) throws IllegalArgumentException {
@@ -170,8 +171,6 @@ public class Extractor {
             return true;
         if (value.equals("false"))
             return false;
-        if (value.equals("null"))
-            return null;
         if (value.startsWith("\"") && value.endsWith("\""))
             return value.substring(1, value.length() - 1);
         if (value.startsWith("{") && value.endsWith("}"))
