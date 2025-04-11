@@ -82,14 +82,50 @@ public class Extractor {
             if (parts.length != 2)
                 throw new IllegalArgumentException("Error: Invalid condition '" + condition + "' .");
 
-            String field1 = parts[0].trim();
-            String operator = condition.trim().substring(field1.length(), condition.trim().length() - parts[1].trim().length()).trim();
-            String field2 = parts[1].trim();
+            String operandString1 = parts[0].trim();
+            String operator = condition.trim().substring(operandString1.length(), condition.trim().length() - parts[1].trim().length()).trim();
+            String operandString2 = parts[1].trim();
 
-            conditionsList.add(new Condition(field1, operator, field2));
+            Operand operand1 = extractOperandInfo(operandString1);
+            Operand operand2 = extractOperandInfo(operandString2);
+
+            conditionsList.add(new Condition(operand1, operator, operand2));
         }
 
         return conditionsList;
+    }
+
+    private static Operand extractOperandInfo(String operandString) throws IllegalArgumentException {
+        Operand operand = new Operand();
+
+        if (operandString.startsWith("\"") && operandString.endsWith("\"")) {
+            operand.type = OperandType.STRING;
+            operand.value = operandString;
+        }
+        else if (operandString.matches("-?\\d+(\\.\\d+)?")) {
+            operand.type = OperandType.NUMBER;
+            operand.value = Double.parseDouble(operandString);
+        }
+        else if (operandString.equals("true") || operandString.equals("false")) {
+            operand.type = OperandType.BOOLEAN;
+            operand.value =  Boolean.parseBoolean(operandString);
+        }
+        else if (operandString.matches("([a-zA-Z0-9_]+([ ]*[+-][ ]*[a-zA-Z0-9_]+)*)(\\.([a-zA-Z0-9_]+([ ]*[+-][ ]*[a-zA-Z0-9_]+)*))*")) {
+            operand.type = OperandType.FIELD;
+            operand.value =  operandString;
+        }
+        else {
+            try {
+                LocalDateTime.parse(operandString);
+                operand.type = OperandType.DATETIME;
+                DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+                operand.value =  LocalDateTime.parse(operandString, formatter);;
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Error: Wrong format of operand '" + operandString + "'.");
+            }
+        }
+
+        return operand;
     }
 
     private static HashMap<String, Object> parseJSON(String json) throws IllegalArgumentException {

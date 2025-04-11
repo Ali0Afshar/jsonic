@@ -40,18 +40,31 @@ class InputData {
     String errorMessage;
 }
 
-class Condition {
-    String field;
-    String operator;
-    String value;
+enum OperandType {
+    FIELD, NUMBER, STRING, BOOLEAN, DATETIME
+}
 
-    public Condition(String field, String operator, String value) {
-        this.field = field;
+class Operand {
+    OperandType type;
+    Object value;
+
+    public String toString() {
+        return value.toString();
+    }
+}
+
+class Condition {
+    Operand operand1;
+    String operator;
+    Operand operand2;
+
+    public Condition(Operand operand1, String operator, Operand operand2) {
+        this.operand1 = operand1;
         this.operator = operator;
-        this.value = value;
+        this.operand2 = operand2;
     }
 
     public String toString() {
-        return field + " " + operator + " " + value;
+        return operand1 + " " + operator + " " + operand2;
     }
 }
