@@ -134,10 +134,8 @@ public class InsertCommandHandler implements CommandHandler {
     }
 
     private void checkListValueType(ArrayList<Object> value, String items) throws IllegalArgumentException {
-        if (value.isEmpty())
-            throw new IllegalArgumentException("Error: List can't be empty.");
-
-        checkValueType(value.get(0), items, null);
+        if (!value.isEmpty())
+            checkValueType(value.get(0), items, null);
     }
 
     private void handleMissingKey(HashMap<String, Object> inputJson, HashMap<String, Object> valueFormat, String key) throws IllegalArgumentException {
