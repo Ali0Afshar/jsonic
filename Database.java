@@ -1,6 +1,11 @@
 package ir.ac.kntu;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class Database {
@@ -43,5 +48,97 @@ public class Database {
 
         dataList.add(newData);
         
+    }
+
+    public ArrayList<HashMap<String, Object>> getFilteredData(String type, ArrayList<Condition> conditions) throws IllegalArgumentException {
+        ArrayList<HashMap<String, Object>> filteredData = new ArrayList<>();
+
+        for (HashMap<String,Object> sampleData : data.get(type))
+            if (isValidSampleData(sampleData, conditions))
+                filteredData.add(sampleData);
+
+        return filteredData;
+    }
+
+    private boolean isValidSampleData(HashMap<String,Object> sampleData, ArrayList<Condition> conditions) {
+        for (Condition condition : conditions) {
+            Operand operand1 = condition.operand1;
+            Operand operand2 = condition.operand2;
+            Object sampleDataValue1;
+            Object sampleDataValue2;
+
+            if (operand1.type == OperandType.FIELD && operand2.type == OperandType.FIELD) {
+                sampleDataValue1 = extractSampleDataValue(operand1, sampleData);
+                sampleDataValue2 = extractSampleDataValue(operand2, sampleData);
+                return isConditionTrue(sampleDataValue1, condition.operator, sampleDataValue2);
+            }
+            else if (operand1.type == OperandType.FIELD) {
+                sampleDataValue1 = extractSampleDataValue(operand1, sampleData);
+                return isConditionTrue(sampleDataValue1, condition.operator, operand2.value);
+            }
+            else {
+                sampleDataValue2 = extractSampleDataValue(operand2, sampleData);
+                return isConditionTrue(operand1.value, condition.operator, sampleDataValue2);
+            }
+        }
+        return true;
+    }
+
+    private boolean isConditionTrue(Object value1, String operator, Object value2) {
+        return switch (operator) {
+            case "=" -> value1.equals(value2);
+            case "!=" -> !value1.equals(value2);
+            case ">" -> compare(value1, value2) > 0;
+            case ">=" -> compare(value1, value2) >= 0;
+            case "<" -> compare(value1, value2) < 0;
+            case "<=" -> compare(value1, value2) <= 0;
+            case "include" -> ((List<Object>)value1).contains(value2);
+            default-> false;
+        };
+    }
+
+    private int compare(Object value1, Object value2) {
+        if (value1 instanceof Integer int1 && value2 instanceof Integer int2)
+            return Integer.compare(int1, int2);
+        else if (value1 instanceof Double double1 && value2 instanceof Double double2)
+            return Double.compare(double1, double2);
+        else if (value1 instanceof LocalDateTime time1 && value2 instanceof LocalDateTime time2)
+            return time1.compareTo(time2);
+        else
+            throw new IllegalArgumentException("Error: Wrong types: " + value1.getClass() + " and " + value2.getClass());
+    }
+
+    private Object extractSampleDataValue(Operand operand, HashMap<String,Object> sampleData) {
+        String value = ((String)operand.value).trim();
+        if (value.contains(".")) {
+            String[] subValue = value.split("\\.(?=[a-zA-Z])");
+            if (subValue.length != 1) {
+                Operand subOperand = new Operand(operand.type, subValue[1]);
+                return extractSampleDataValue(subOperand, (HashMap<String,Object>)sampleData.get(subValue[0]));
+            }
+        }
+
+        if (value.contains("+") || value.contains("-")) {
+            double result = 0;
+            Pattern pattern = Pattern.compile("([+-]?\\s*[a-zA-Z_][a-zA-Z0-9_]*|[+-]?\\s*\\d+(\\.\\d+)?)");
+            Matcher matcher = pattern.matcher(value.trim());
+
+            while (matcher.find()) {
+                String valuePart = matcher.group().replaceAll("\\s+", "");
+                try {
+                    result += Double.parseDouble(valuePart);
+                } catch (NumberFormatException e) {
+                    Number variableNumber = (Number) sampleData.get(valuePart.replaceFirst("^[+-]", ""));
+                    double variableValue = variableNumber.doubleValue();
+                    if (valuePart.startsWith("-"))
+                        result -= variableValue;
+                    else
+                        result += variableValue;
+                }
+            }
+            return result;
+        }
+
+        return sampleData.get(value);
     }
 }
