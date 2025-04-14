@@ -51,8 +51,10 @@ public class Database {
     }
 
     public ArrayList<HashMap<String, Object>> getFilteredData(String type, ArrayList<Condition> conditions) throws IllegalArgumentException {
+        if (conditions == null)
+            return data.get(type);
+            
         ArrayList<HashMap<String, Object>> filteredData = new ArrayList<>();
-
         for (HashMap<String,Object> sampleData : data.get(type))
             if (isValidSampleData(sampleData, conditions))
                 filteredData.add(sampleData);
