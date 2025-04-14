@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,39 +64,129 @@ public class Extractor {
         
         if (matcher.find()) {
             String conditions = matcher.group(1).trim();
-            inputData.conditions = parseConditions(conditions);
+            Database db = Database.getInstance();
+            inputData.conditions = parseConditions(conditions, db.getTypeFormatByType(inputData.typeName));
             return true;
         }
         
         return false;
     }
 
-    private static ArrayList<Condition> parseConditions(String conditionsString) throws IllegalArgumentException {
+    private static ArrayList<Condition> parseConditions(String conditionsString, HashMap<String, Object> format) throws IllegalArgumentException {
         if (conditionsString.isEmpty())
             throw new IllegalArgumentException("Error: Conditions can't be empty.");
 
         ArrayList<Condition> conditionsList = new ArrayList<>();
         String[] conditions = conditionsString.split(",");
 
-        for (String condition : conditions) {
-            String[] parts = condition.trim().split("(?<=[^\\s])\\s*(>=|<=|!=|=|>|<|\\s+include\\s+)\\s*(?=[^\\s])");
+        for (String conditionString : conditions) {
+            String[] parts = conditionString.trim().split("(?<=[^\\s])\\s*(>=|<=|!=|=|>|<|\\s+include\\s+)\\s*(?=[^\\s])");
             if (parts.length != 2)
-                throw new IllegalArgumentException("Error: Invalid condition '" + condition + "' .");
+                throw new IllegalArgumentException("Error: Invalid condition '" + conditionString + "' .");
 
             String operandString1 = parts[0].trim();
-            String operator = condition.trim().substring(operandString1.length(), condition.trim().length() - parts[1].trim().length()).trim();
+            String operator = conditionString.trim().substring(operandString1.length(), conditionString.trim().length() - parts[1].trim().length()).trim();
             String operandString2 = parts[1].trim();
 
-            Operand operand1 = extractOperandInfo(operandString1);
-            Operand operand2 = extractOperandInfo(operandString2);
+            Operand operand1 = extractOperandInfo(operandString1, operator);
+            Operand operand2 = extractOperandInfo(operandString2, operator);
 
-            conditionsList.add(new Condition(operand1, operator, operand2));
+            if (operand1.type != OperandType.FIELD && operand2.type != OperandType.FIELD)
+                throw new IllegalArgumentException("Error: Wrong condition '" + conditionString + "'.");
+
+            Condition condition = new Condition(operand1, operator, operand2);
+            checkConditionType(condition, format);
+
+            conditionsList.add(condition);
         }
 
         return conditionsList;
     }
 
-    private static Operand extractOperandInfo(String operandString) throws IllegalArgumentException {
+    private static void checkConditionType(Condition condition, HashMap<String, Object> format) throws IllegalArgumentException {
+        Operand operand1 = condition.operand1;
+        Operand operand2 = condition.operand2;
+
+        if (operand1.type == OperandType.FIELD)
+            checkOperandType(operand1, format);
+        if (operand2.type == OperandType.FIELD)
+            checkOperandType(operand2, format);
+
+        if (operand1.type == OperandType.FIELD && operand1.fieldType == OperandType.LIST) {
+            if (operand1.listType != operand2.type)
+                throw new IllegalArgumentException("Error: Can't compare different field types '" + condition + "'.");
+        }
+        else if (operand1.type == OperandType.FIELD && operand2.type == OperandType.FIELD) {
+            if (operand1.fieldType != operand2.fieldType)
+                throw new IllegalArgumentException("Error: Can't compare different field types '" + condition + "'.");
+        }
+        else if (operand1.type == OperandType.FIELD) {
+            if (operand1.fieldType != operand2.type)
+                throw new IllegalArgumentException("Error: Can't compare different field types '" + condition + "'.");
+        }
+        else if (operand2.type == OperandType.FIELD) {
+            if (operand2.fieldType != operand1.type)
+                throw new IllegalArgumentException("Error: Can't compare different field types '" + condition + "'.");
+        }
+
+        if (operand1.type == OperandType.FIELD) {
+            String opr = condition.operator;
+            if (opr.equals(">") || opr.equals(">=") || opr.equals("<") || opr.equals("<="))
+                if (!(operand1.fieldType == OperandType.DATETIME) && !(operand1.fieldType == OperandType.NUMBER))
+                    throw new IllegalArgumentException("Error: Operator '" + opr + "' only allowed for int or time types. Error in '" + condition + "'.");
+        }
+    }
+
+    private static void checkOperandType(Operand operand, HashMap<String, Object> format) throws IllegalArgumentException {
+        String value = ((String)operand.value).trim();
+        if (value.contains(".")) {
+            String[] subValue = value.split("\\.");
+            if (!format.containsKey(subValue[0]))
+                throw new IllegalArgumentException("Error: Wrong field '" + value + "'.");
+            Operand subOperand = new Operand(operand.type, subValue[1]);
+            checkOperandType(subOperand, (HashMap<String, Object>) format.get(subValue[0]));
+            operand.fieldType = subOperand.fieldType;
+            return;
+        }
+
+        if (value.contains("+") || value.contains("-")) {
+            String[] valueParts = value.trim().split("[+-]");
+            for (String valuePart : valueParts) {
+                try {
+                    Double.parseDouble(valuePart.trim());
+                } catch (NumberFormatException e) {
+                    if (!format.containsKey(valuePart.trim()))
+                        throw new IllegalArgumentException("Error: Wrong field '" + value + "'.");
+                    String valueType = ((String)((HashMap<String, Object>)format.get(valuePart.trim())).get("type"));
+                    if (!valueType.equals("int") && !valueType.equals("dbl"))
+                        throw new IllegalArgumentException("Error: Wrong field '" + value + "'.");
+                }
+            }
+            operand.fieldType = OperandType.NUMBER;
+            return;
+        }
+
+        if (format.containsKey(value)) {
+            operand.fieldType = getOperandType((String)((HashMap<String, Object>)format.get(value)).get("type"));
+            if (operand.fieldType == OperandType.LIST)
+                operand.listType = getOperandType((String)((HashMap<String, Object>)format.get(value)).get("items"));
+        }
+        else 
+            throw new IllegalArgumentException("Error: Invalid field '" + value + "'.");
+    }
+
+    private static OperandType getOperandType(String switchValue) {
+        return switch (switchValue) {
+            case "string" -> OperandType.STRING;
+            case "int", "dbl" -> OperandType.NUMBER;
+            case "bool" -> OperandType.BOOLEAN;
+            case "list" -> OperandType.LIST;
+            case "time" -> OperandType.DATETIME;
+            default -> throw new IllegalArgumentException("Error: Unknown error.");
+        };
+    }
+
+    private static Operand extractOperandInfo(String operandString, String operator) throws IllegalArgumentException {
         Operand operand = new Operand();
 
         if (operandString.startsWith("\"") && operandString.endsWith("\"")) {
@@ -112,6 +203,10 @@ public class Extractor {
         }
         else if (operandString.matches("([a-zA-Z0-9_]+([ ]*[+-][ ]*[a-zA-Z0-9_]+)*)(\\.([a-zA-Z0-9_]+([ ]*[+-][ ]*[a-zA-Z0-9_]+)*))*")) {
             operand.type = OperandType.FIELD;
+            operand.value =  operandString;
+        }
+        else if (operator.equals("include")) {
+            operand.type = OperandType.LIST;
             operand.value =  operandString;
         }
         else {
