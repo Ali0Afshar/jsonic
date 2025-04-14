@@ -140,13 +140,15 @@ public class Extractor {
     private static void checkOperandType(Operand operand, HashMap<String, Object> format) throws IllegalArgumentException {
         String value = ((String)operand.value).trim();
         if (value.contains(".")) {
-            String[] subValue = value.split("\\.");
-            if (!format.containsKey(subValue[0]))
-                throw new IllegalArgumentException("Error: Wrong field '" + value + "'.");
-            Operand subOperand = new Operand(operand.type, subValue[1]);
-            checkOperandType(subOperand, (HashMap<String, Object>) format.get(subValue[0]));
-            operand.fieldType = subOperand.fieldType;
-            return;
+            String[] subValue = value.split("\\.(?=[a-zA-Z])");
+            if (subValue.length != 1) {
+                if (!format.containsKey(subValue[0]))
+                    throw new IllegalArgumentException("Error: Wrong field '" + value + "'.");
+                Operand subOperand = new Operand(operand.type, subValue[1]);
+                checkOperandType(subOperand, (HashMap<String, Object>) format.get(subValue[0]));
+                operand.fieldType = subOperand.fieldType;
+                return;
+            }
         }
 
         if (value.contains("+") || value.contains("-")) {
