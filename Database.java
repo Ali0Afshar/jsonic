@@ -2,7 +2,6 @@ package ir.ac.kntu;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.LocalDateTime;
@@ -52,14 +51,44 @@ public class Database {
 
     public ArrayList<HashMap<String, Object>> getFilteredData(String type, ArrayList<Condition> conditions) throws IllegalArgumentException {
         if (conditions == null)
-            return data.get(type);
-            
+            return getAllDataByType(type);
+        
         ArrayList<HashMap<String, Object>> filteredData = new ArrayList<>();
-        for (HashMap<String,Object> sampleData : data.get(type))
+        for (HashMap<String,Object> sampleData : getAllDataByType(type))
             if (isValidSampleData(sampleData, conditions))
                 filteredData.add(sampleData);
 
         return filteredData;
+    }
+
+    public ArrayList<Integer> getIndexFilteredData(String type, ArrayList<Condition> conditions) throws IllegalArgumentException {
+        ArrayList<Integer> indexes = new ArrayList<>();
+        int i = 0;
+
+        for (HashMap<String,Object> sampleData : getAllDataByType(type)) {
+            if (conditions == null || isValidSampleData(sampleData, conditions))
+                indexes.add(i);
+            i++;
+        }
+
+        return indexes;
+    }
+
+    public int updateDataByIndex(String type, ArrayList<Integer> indexes, HashMap<String,Object> newData) {
+        int counter = 0;
+
+        for (int index : indexes) {
+            updateSampleData(type, newData, getAllDataByType(type).get(index));
+            counter++;
+        }
+
+        return counter;
+    }
+
+    private void updateSampleData(String type, HashMap<String,Object> newData, HashMap<String,Object> lastData) {
+        for (String key : newData.keySet()) {
+            lastData.put(key, newData.get(key));
+        }
     }
 
     private boolean isValidSampleData(HashMap<String,Object> sampleData, ArrayList<Condition> conditions) {
@@ -88,8 +117,8 @@ public class Database {
 
     private boolean isConditionTrue(Object value1, String operator, Object value2) {
         return switch (operator) {
-            case "=" -> value1.equals(value2);
-            case "!=" -> !value1.equals(value2);
+            case "=" -> isEqual(value1, value2);
+            case "!=" -> !isEqual(value1, value2);
             case ">" -> compare(value1, value2) > 0;
             case ">=" -> compare(value1, value2) >= 0;
             case "<" -> compare(value1, value2) < 0;
@@ -104,10 +133,23 @@ public class Database {
             return Integer.compare(int1, int2);
         else if (value1 instanceof Double double1 && value2 instanceof Double double2)
             return Double.compare(double1, double2);
+        else if (value1 instanceof Integer int1 && value2 instanceof Double double2)
+            return Double.compare(int1.doubleValue(), double2);
+        else if (value1 instanceof Double double1 && value2 instanceof Integer int2)
+            return Double.compare(double1, int2.doubleValue());
         else if (value1 instanceof LocalDateTime time1 && value2 instanceof LocalDateTime time2)
             return time1.compareTo(time2);
         else
             throw new IllegalArgumentException("Error: Wrong types: " + value1.getClass() + " and " + value2.getClass());
+    }
+
+    private boolean isEqual(Object value1, Object value2) {
+        if (value1 == null || value2 == null)
+            return value1 == value2;
+        if ((value1 instanceof Number) && (value2 instanceof Number)) {
+            return compare(value1, value2) == 0;
+        }
+        return value1.equals(value2);
     }
 
     private Object extractSampleDataValue(Operand operand, HashMap<String,Object> sampleData) {
