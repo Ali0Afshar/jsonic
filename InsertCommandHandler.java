@@ -17,6 +17,7 @@ public class InsertCommandHandler implements CommandHandler {
         DEFAULT_VALUE.put("list", new ArrayList<>());
     }
 
+    @Override
     public void handle(InputData inputData) throws IllegalArgumentException {
         if (!isValidInput(inputData.input))
             throw new IllegalArgumentException("Error: Invalid input.");

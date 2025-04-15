@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SearchCommandHandler implements CommandHandler {
+    @Override
     public void handle(InputData inputData) throws IllegalArgumentException {
         if (!isValidInput(inputData.input))
             throw new IllegalArgumentException("Error: Invalid input.");
