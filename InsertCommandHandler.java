@@ -31,7 +31,7 @@ public class InsertCommandHandler implements CommandHandler {
         if (!Extractor.extractJson(inputData))
             throw new IllegalArgumentException("Error: JSON doesn't exist");
 
-        checkJsonInput(inputData.json, db.getTypeFormatByType(inputData.typeName));
+        checkJsonInput(inputData.json, db.getTypeFormatByType(inputData.typeName), 'i');
 
         checkJsonInputKey(inputData.json, db.getTypeFormatByType(inputData.typeName));
 
@@ -48,12 +48,12 @@ public class InsertCommandHandler implements CommandHandler {
         return false;
     }
 
-    private void checkJsonUnique(HashMap<String, Object> inputJson, ArrayList<HashMap<String, Object>> dataList, HashMap<String, Object> dataFormat) throws IllegalArgumentException {
+    public static void checkJsonUnique(HashMap<String, Object> inputJson, ArrayList<HashMap<String, Object>> dataList, HashMap<String, Object> dataFormat) throws IllegalArgumentException {
         for (HashMap<String, Object> data : dataList)
             checkDataUnique(inputJson, data, dataFormat);
     }
 
-    private void checkDataUnique(HashMap<String, Object> inputJson, HashMap<String, Object> data, HashMap<String, Object> dataFormat) throws IllegalArgumentException {
+    private static void checkDataUnique(HashMap<String, Object> inputJson, HashMap<String, Object> data, HashMap<String, Object> dataFormat) throws IllegalArgumentException {
         for (String key : inputJson.keySet()) {
             Object inputValue = inputJson.get(key);
             Object dataValue = data.get(key);
@@ -69,7 +69,7 @@ public class InsertCommandHandler implements CommandHandler {
         }
     }
 
-    private void checkJsonInputKey(HashMap<String, Object> inputJson, HashMap<String, Object> jsonFormat) throws IllegalArgumentException {
+    public static void checkJsonInputKey(HashMap<String, Object> inputJson, HashMap<String, Object> jsonFormat) throws IllegalArgumentException {
         for (String key : inputJson.keySet()) {
             if (!jsonFormat.containsKey(key))
                 throw new IllegalArgumentException("Error: Key '" + key + "' is not defined in the format.");
@@ -80,30 +80,32 @@ public class InsertCommandHandler implements CommandHandler {
         }
     }
 
-    private void checkJsonInput(HashMap<String, Object> inputJson, HashMap<String, Object> jsonFormat) throws IllegalArgumentException {
+    public static void checkJsonInput(HashMap<String, Object> inputJson, HashMap<String, Object> jsonFormat, char className) throws IllegalArgumentException {
         for (String key : jsonFormat.keySet()) {
             HashMap<String, Object> valueFormat = (HashMap)jsonFormat.get(key);
 
-            if (!inputJson.containsKey(key))
+            if (!inputJson.containsKey(key) && className == 'i')
                 handleMissingKey(inputJson, valueFormat, key);
 
             Object valueInput = inputJson.get(key);
             if (isNestedJson(valueFormat)) {
                 if (valueInput instanceof HashMap) {
-                    checkJsonInput((HashMap<String, Object>) valueInput, valueFormat);
+                    checkJsonInput((HashMap<String, Object>) valueInput, valueFormat, className);
                     continue;
                 }
-                throw new IllegalArgumentException("Error: \'" + valueInput + "\' is wrong.");
+                if (valueInput != null)
+                    throw new IllegalArgumentException("Error: \'" + valueInput + "\' is wrong.");
             }
 
             if (valueInput instanceof HashMap)
                 throw new IllegalArgumentException("Error: \'" + valueInput + "\' is wrong.");
 
-            checkValueType(valueInput, (String) valueFormat.get("type"), (String) valueFormat.get("items"));
+            if (valueInput != null)
+                checkValueType(valueInput, (String) valueFormat.get("type"), (String) valueFormat.get("items"));
         }        
     }
 
-    private void checkValueType(Object value, String type, String items) throws IllegalArgumentException {
+    private static void checkValueType(Object value, String type, String items) throws IllegalArgumentException {
         switch (type) {
             case "string":
                 if (!(value instanceof String))
@@ -133,14 +135,16 @@ public class InsertCommandHandler implements CommandHandler {
         }
     }
 
-    private void checkListValueType(ArrayList<Object> value, String items) throws IllegalArgumentException {
+    private static void checkListValueType(ArrayList<Object> value, String items) throws IllegalArgumentException {
         if (!value.isEmpty())
             checkValueType(value.get(0), items, null);
     }
 
-    private void handleMissingKey(HashMap<String, Object> inputJson, HashMap<String, Object> valueFormat, String key) throws IllegalArgumentException {
-        if (isNestedJson(valueFormat))
-            throw new IllegalArgumentException("Error: \'" + valueFormat + "\' is necessary");
+    private static void handleMissingKey(HashMap<String, Object> inputJson, HashMap<String, Object> valueFormat, String key) throws IllegalArgumentException {
+        if (isNestedJson(valueFormat)) {
+            if (isPresentRequired(valueFormat))
+                throw new IllegalArgumentException("Error: \'" + valueFormat + "\' is necessary");
+        }
         else if ((Boolean) valueFormat.get("required"))
             throw new IllegalArgumentException("Error: \'" + key + ": " + valueFormat + "\' is necessary");
         else {
@@ -151,7 +155,22 @@ public class InsertCommandHandler implements CommandHandler {
         }
     }
 
-    private boolean isNestedJson(HashMap<String, Object> json) {
+    private static boolean isPresentRequired(HashMap<String, Object> formatJson) {
+        for (String key : formatJson.keySet()) {
+            HashMap<String, Object> formatValue = (HashMap<String, Object>)formatJson.get(key);
+            if (isNestedJson(formatValue)) {
+                isPresentRequired(formatValue);
+                continue;
+            }
+            
+            if ((Boolean)formatValue.get("required"))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static boolean isNestedJson(HashMap<String, Object> json) {
         for (String key : json.keySet())
             if (json.get(key) instanceof HashMap)
                 return true;
