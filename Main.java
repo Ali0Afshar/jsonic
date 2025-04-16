@@ -6,10 +6,10 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        InputData inputData = new InputData();
         Scanner scanner = new Scanner(System.in);
 
         do {
+            InputData inputData = new InputData();
             inputData.input = scanner.nextLine();
             inputData.input = inputData.input.toLowerCase();
 
@@ -41,15 +41,24 @@ class InputData {
 }
 
 enum OperandType {
-    FIELD, NUMBER, STRING, BOOLEAN, DATETIME
+    FIELD, NUMBER, STRING, BOOLEAN, DATETIME, LIST
 }
 
 class Operand {
     OperandType type;
     Object value;
+    OperandType fieldType;
+    OperandType listType;
+
+    public Operand() {}
+
+    public Operand(OperandType type, Object value) {
+        this.type = type;
+        this.value = value;
+    }
 
     public String toString() {
-        return value.toString();
+        return "" + value + "";
     }
 }
 
