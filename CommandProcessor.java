@@ -14,12 +14,13 @@ public class CommandProcessor {
         handlers.put("delete", new DeleteCommandHandler());
     }
 
-    public void processCommand(InputData inputData) {
+    public CommandResult processCommand(InputData inputData) {
         CommandHandler handler = handlers.get(inputData.command);
         if (handler != null) {
-            handler.handle(inputData);
-        } else {
-            System.out.println("Unknown command: " + inputData.command);
+            return handler.handle(inputData);
+        } 
+        else {
+            throw new IllegalArgumentException("Unknown command: " + inputData.command);
         }
     }
 }

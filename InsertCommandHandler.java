@@ -18,7 +18,7 @@ public class InsertCommandHandler implements CommandHandler {
     }
 
     @Override
-    public void handle(InputData inputData) throws IllegalArgumentException {
+    public CommandResult handle(InputData inputData) throws IllegalArgumentException {
         if (!isValidInput(inputData.input))
             throw new IllegalArgumentException("Error: Invalid input.");
 
@@ -38,6 +38,7 @@ public class InsertCommandHandler implements CommandHandler {
         checkJsonUnique(inputData.json, db.getAllDataByType(inputData.typeName), db.getTypeFormatByType(inputData.typeName));
 
         db.addData(inputData.typeName, inputData.json);
+        return new CommandResult(PrintType.JSON, inputData.json);
     }
 
     private boolean isValidInput(String input) {

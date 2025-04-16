@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public class DeleteCommandHandler implements CommandHandler {
     @Override
-    public void handle(InputData inputData) throws IllegalArgumentException {
+    public CommandResult handle(InputData inputData) throws IllegalArgumentException {
         if (!isValidInput(inputData.input))
             throw new IllegalArgumentException("Error: Invalid input.");
 
@@ -18,8 +18,15 @@ public class DeleteCommandHandler implements CommandHandler {
             inputData.conditions = null;
 
         Database db = Database.getInstance();
-        db.deleteDataByCondition(inputData.typeName, inputData.conditions);
+        int result = db.deleteDataByCondition(inputData.typeName, inputData.conditions);
+        String message;
 
+        if (result == 0)
+            message = Color.YELLOW + "No data found to delete." + Color.RESET;
+        else 
+            message = Color.GREEN + "Delete completed successfully. '" + result + "' samples deleted." + Color.RESET;
+        
+        return new CommandResult(PrintType.TEXT, message);
     }
 
     private boolean isValidInput(String input) {

@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 public class UpdateCommandHandler implements CommandHandler{
     @Override
-    public void handle(InputData inputData) {
+    public CommandResult handle(InputData inputData) {
         if (!isValidInput(inputData.input))
             throw new IllegalArgumentException("Error: Invalid input.");
 
@@ -30,7 +30,8 @@ public class UpdateCommandHandler implements CommandHandler{
         if (indexes.size() > 1)
             checkUnique(typeFormat, inputData.json);
 
-        db.updateDataByIndex(inputData.typeName, indexes, inputData.json);
+        int result = db.updateDataByIndex(inputData.typeName, indexes, inputData.json);
+        return new CommandResult(PrintType.TEXT, Color.GREEN + "Update completed successfully. '" + result + "' samples updated." + Color.RESET);
     }
 
     private boolean isValidInput(String input) {

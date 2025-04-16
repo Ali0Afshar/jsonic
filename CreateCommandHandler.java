@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class CreateCommandHandler implements CommandHandler {
     @Override
-    public void handle(InputData inputData) throws IllegalArgumentException {
+    public CommandResult handle(InputData inputData) throws IllegalArgumentException {
         if (!isValidInput(inputData.input))
             throw new IllegalArgumentException("Error: Invalid input.");
 
@@ -27,6 +27,7 @@ public class CreateCommandHandler implements CommandHandler {
         prepareJson(inputData.json);
 
         db.addNewTypeFormat(inputData.typeName, inputData.json);
+        return new CommandResult(PrintType.TEXT, Color.GREEN + "Type '" + inputData.typeName + "' sucsefuly added." + Color.RESET);
     }
 
     private boolean isValidInput(String input) {

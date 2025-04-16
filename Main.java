@@ -7,9 +7,9 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        InputData inputData = new InputData();
 
         do {
-            InputData inputData = new InputData();
             inputData.input = scanner.nextLine();
             inputData.input = inputData.input.toLowerCase();
 
@@ -42,6 +42,33 @@ class InputData {
 
 enum OperandType {
     FIELD, NUMBER, STRING, BOOLEAN, DATETIME, LIST
+}
+
+enum PrintType {
+    TEXT, JSON, LIST
+}
+
+enum Color {
+    RESET("\u001B[0m"),
+    BLACK("\u001B[30m"),
+    RED("\u001B[31m"),
+    GREEN("\u001B[32m"),
+    YELLOW("\u001B[33m"),
+    BLUE("\u001B[34m"),
+    PURPLE("\u001B[35m"),
+    CYAN("\u001B[36m"),
+    WHITE("\u001B[37m");
+
+    private final String code;
+
+    Color(String code) {
+        this.code = code;
+    }
+
+    @Override
+    public String toString() {
+        return code;
+    }
 }
 
 class Operand {
