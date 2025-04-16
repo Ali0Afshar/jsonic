@@ -31,7 +31,7 @@ public class CreateCommandHandler implements CommandHandler {
     }
 
     private boolean isValidInput(String input) {
-        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_]+\\s+[a-zA-Z0-9_]+\\s*\\{.*\\}$");
+        Pattern pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+[a-zA-Z0-9_]+\\s*\\{.*\\}\\s*$");
         Matcher matcher = pattern.matcher(input);
         if (matcher.find())
             return true;
