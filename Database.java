@@ -74,6 +74,18 @@ public class Database {
         return indexes;
     }
 
+    public int updateDataByCondition(String type, ArrayList<Condition> conditions, HashMap<String,Object> newData) throws IllegalArgumentException {
+        int counter = 0;
+
+        for (HashMap<String,Object> lastData : getAllDataByType(type))
+            if (conditions == null || isValidSampleData(lastData, conditions)) {
+                updateSampleData(type, newData, lastData);
+                counter++;
+            }
+
+        return counter;
+    }
+
     public int updateDataByIndex(String type, ArrayList<Integer> indexes, HashMap<String,Object> newData) {
         int counter = 0;
 
