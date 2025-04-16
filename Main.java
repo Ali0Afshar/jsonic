@@ -1,7 +1,10 @@
 package ir.ac.kntu;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
@@ -21,7 +24,8 @@ public class Main {
             try {
                 Extractor.extractCommand(inputData);
                 CommandProcessor processor = new CommandProcessor();
-                processor.processCommand(inputData);
+                CommandResult result = processor.processCommand(inputData);
+                customPrint(result);
             }
             catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -29,6 +33,69 @@ public class Main {
 
         } while (true);
     }
+
+    private static void customPrint(CommandResult result) {
+        switch (result.getType()) {
+            case PrintType.TEXT:
+                System.out.println(result.getValue());
+                break;
+            case PrintType.JSON:
+                printJson((HashMap<String, Object>)result.getValue(), 0);
+                break;
+            case PrintType.LIST:
+                for (HashMap<String, Object> json : (ArrayList<HashMap<String, Object>>)result.getValue()) {
+                    printJson(json, 0);
+                    System.out.println();
+                    System.out.println("-------------------------------------------------------------");
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static void printJson(Object obj, int indent) {
+        String indentStr = "  ".repeat(indent);
+    
+        if (obj instanceof HashMap) {
+            System.out.println(indentStr + "{");
+            HashMap<String, Object> map = (HashMap<String, Object>) obj;
+            int count = 0;
+    
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                System.out.print("  ".repeat(indent + 1));
+                System.out.print(Color.CYAN + "\"" + entry.getKey() + "\"" + Color.RESET + ": ");
+                printJson(entry.getValue(), indent + 1);
+                count++;
+                if (count < map.size())
+                    System.out.print(",");
+                System.out.println();
+            }
+    
+            System.out.print(indentStr + "}");
+        }
+        else if (obj instanceof List) {
+            List list = (List) obj;
+            System.out.print("[");
+    
+            for (int i = 0; i < list.size(); i++) {
+                Object item = list.get(i);
+                printJson(item, 0);
+                if (i < list.size() - 1)
+                    System.out.print(", ");
+            }
+    
+            System.out.print("]");
+        }
+        else if (obj instanceof String)
+            System.out.print(Color.YELLOW + "\"" + obj + "\"" + Color.RESET);
+        else if (obj instanceof Number)
+            System.out.print(Color.PURPLE + "" + obj + Color.RESET);
+        else if (obj instanceof Boolean)
+            System.out.print(Color.BLUE + "" + obj + Color.RESET);
+        else if (obj instanceof LocalDateTime)
+            System.out.print(Color.RED + "\"" + obj + "\"" + Color.RESET);
+    }    
 }
 
 class InputData {
