@@ -74,6 +74,19 @@ public class Database {
         return indexes;
     }
 
+    public int deleteDataByCondition(String type, ArrayList<Condition> conditions) {
+        int counter = 0;
+        ArrayList<HashMap<String, Object>> dataList = getAllDataByType(type);
+
+        for (HashMap<String,Object> sampleData : dataList)
+            if (conditions == null || isValidSampleData(sampleData, conditions)) {
+                dataList.remove(sampleData);
+                counter++;
+            }
+            
+        return counter;
+    }
+
     public int updateDataByCondition(String type, ArrayList<Condition> conditions, HashMap<String,Object> newData) throws IllegalArgumentException {
         int counter = 0;
 
