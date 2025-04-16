@@ -14,11 +14,12 @@ public class UpdateCommandHandler implements CommandHandler{
         Extractor.extractTypeName(inputData);
         checkTypeExist(inputData.typeName);
 
-        if (!Extractor.extractConditions(inputData))
+        if (Extractor.isConditionPresent(inputData.input))
+            Extractor.extractConditions(inputData);
+        else
             inputData.conditions = null;
 
-        if (!Extractor.extractJson(inputData))
-            throw new IllegalArgumentException("Error: JSON doesn't exist");
+        Extractor.extractJson(inputData);
 
         Database db = Database.getInstance();
         HashMap<String, Object> typeFormat = db.getTypeFormatByType(inputData.typeName);

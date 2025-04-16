@@ -17,8 +17,7 @@ public class CreateCommandHandler implements CommandHandler {
             throw new IllegalArgumentException("Error: This type already exists!");
         }
         
-        if (!Extractor.extractJson(inputData))
-            throw new IllegalArgumentException("Error: JSON doesn't exist");
+        Extractor.extractJson(inputData);
 
         if (inputData.json.isEmpty())
             throw new IllegalArgumentException("Error: JSON can't be empty.");

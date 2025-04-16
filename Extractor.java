@@ -29,11 +29,11 @@ public class Extractor {
             throw new IllegalArgumentException("Error: Invalid type format");
     }
 
-    public static boolean extractJson(InputData inputData) throws IllegalArgumentException {
+    public static void extractJson(InputData inputData) throws IllegalArgumentException {
         String input = inputData.input.trim();
         int start = input.indexOf('{');
         if (start == -1)
-            return false;
+            throw new IllegalArgumentException("Error: JSON doesn't exist.");
 
         int count = 0, end = -1;
         for (int i = start; i < input.length(); i++) {
@@ -55,10 +55,9 @@ public class Extractor {
 
         String jsonInput = input.substring(start, end + 1).trim();
         inputData.json = parseJSON(jsonInput);
-        return true;
     }
 
-    public static boolean extractConditions(InputData inputData) throws IllegalArgumentException {
+    public static void extractConditions(InputData inputData) throws IllegalArgumentException {
         Pattern pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+[a-zA-Z0-9_]+\\s+\\(([^()]+)\\).*");
         Matcher matcher = pattern.matcher(inputData.input);
         
@@ -66,9 +65,17 @@ public class Extractor {
             String conditions = matcher.group(1).trim();
             Database db = Database.getInstance();
             inputData.conditions = parseConditions(conditions, db.getTypeFormatByType(inputData.typeName));
-            return true;
         }
+        else
+            throw new IllegalArgumentException("Error: Invalid condition format.");
+    }
+
+    public static boolean isConditionPresent(String input) {
+        Pattern pattern = Pattern.compile("^\\s*[A-Za-z0-9_]+\\s+[A-Za-z0-9_]+\\s+\\(.*$");
+        Matcher matcher = pattern.matcher(input);
         
+        if (matcher.find())
+            return true;
         return false;
     }
 

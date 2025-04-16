@@ -29,8 +29,7 @@ public class InsertCommandHandler implements CommandHandler {
             throw new IllegalArgumentException("Error: This type not exists.");
         }
 
-        if (!Extractor.extractJson(inputData))
-            throw new IllegalArgumentException("Error: JSON doesn't exist");
+        Extractor.extractJson(inputData);
 
         checkJsonInput(inputData.json, db.getTypeFormatByType(inputData.typeName), 'i');
 

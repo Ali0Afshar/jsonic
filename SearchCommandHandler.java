@@ -13,13 +13,14 @@ public class SearchCommandHandler implements CommandHandler {
         Extractor.extractTypeName(inputData);
         checkTypename(inputData.typeName);
         
-        if (!Extractor.extractConditions(inputData))
+        if (Extractor.isConditionPresent(inputData.input))
+            Extractor.extractConditions(inputData);
+        else
             inputData.conditions = null;
-        
+            
         Database db = Database.getInstance();
         for (HashMap<String, Object> data : db.getFilteredData(inputData.typeName, inputData.conditions)) {
             System.out.println(data);
-            return;
         }
         // No data matches these conditions.
     }
