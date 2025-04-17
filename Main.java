@@ -1,6 +1,7 @@
 package ir.ac.kntu;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,8 @@ public class Main {
         } while (true);
     }
 
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private static void customPrint(CommandResult result) {
         switch (result.getType()) {
             case PrintType.TEXT:
@@ -41,6 +44,7 @@ public class Main {
                 break;
             case PrintType.JSON:
                 printJson((HashMap<String, Object>)result.getValue(), 0);
+                System.out.println();
                 break;
             case PrintType.LIST:
                 for (HashMap<String, Object> json : (ArrayList<HashMap<String, Object>>)result.getValue()) {
@@ -94,8 +98,8 @@ public class Main {
         else if (obj instanceof Boolean)
             System.out.print(Color.BLUE + "" + obj + Color.RESET);
         else if (obj instanceof LocalDateTime)
-            System.out.print(Color.RED + "\"" + obj + "\"" + Color.RESET);
-    }    
+            System.out.print(Color.RED + "\"" + ((LocalDateTime) obj).format(DATE_TIME_FORMATTER) + "\"" + Color.RESET);
+    }
 }
 
 class InputData {
@@ -104,7 +108,6 @@ class InputData {
     String typeName;
     ArrayList<Condition> conditions;
     HashMap<String, Object> json;
-    String errorMessage;
 }
 
 enum OperandType {
@@ -151,6 +154,7 @@ class Operand {
         this.value = value;
     }
 
+    @Override
     public String toString() {
         return "" + value + "";
     }
@@ -167,6 +171,7 @@ class Condition {
         this.operand2 = operand2;
     }
 
+    @Override
     public String toString() {
         return operand1 + " " + operator + " " + operand2;
     }
