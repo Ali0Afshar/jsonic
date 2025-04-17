@@ -22,7 +22,7 @@ public class SearchCommandHandler implements CommandHandler {
         Database db = Database.getInstance();
         ArrayList<HashMap<String, Object>> result = db.getFilteredData(inputData.typeName, inputData.conditions);
         
-        if (result == null) 
+        if (result.isEmpty()) 
             return new CommandResult(PrintType.TEXT, Color.YELLOW + "No result found." + Color.RESET);
         else 
             return new CommandResult(PrintType.LIST, result);
